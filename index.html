@@ -35,6 +35,10 @@
       width: 100%;
       border-radius: 0.5rem;
     }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+    }
   </style>
 </head>
 <body>
@@ -57,57 +61,37 @@
     </div>
   </div>
 
-  <!-- Dishes List -->
-  <div class="container mb-5">
-    <h3 class="mb-3">Menu</h3>
-    <div class="row g-3">
-      <!-- Dish 1 -->
-      <div class="col-12 col-md-6">
-        <div class="card h-100">
-            <img src="https://newmansown.com/wp-content/uploads/2022/03/Homemade-lasagna-1200x675.png" class="dish-img card-img-top" alt="Dish 1">
-            <div class="card-body">
-            <span class="badge bg-success mb-2">Available Today</span>
-            <h5 class="card-title">Classic Lasagna</h5>
-            <p class="card-text">Rich layers of pasta, homemade sauce, and cheese.</p>
-            <span class="badge bg-primary">$35/tray of 4px</span>
-            </div>
-        </div>
+  <!-- Loading State -->
+  <div id="loading" class="container">
+    <div class="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
-      <!-- Dish 2 -->
-      <div class="col-12 col-md-6">
-        <div class="card h-100">
-          <img src="https://www.hataydanal.com/image/cache/catalog/belen%20tava-600x315w.png.webp" class="dish-img card-img-top" alt="Dish 2">
-          <div class="card-body">
-            <span class="badge bg-success mb-2">Available upon request</span>
-            <h5 class="card-title">Belen Tava</h5>
-            <p class="card-text">Beef with sauted onions</p>
-            <span class="badge bg-primary">$45/tray of 4pax</span>
-          </div>
-        </div>
-      </div>
-      <!-- Dish 3 -->
-      <div class="col-12 col-md-6">
-        <div class="card h-100">
-          <img src="https://placehold.co/400x150" class="dish-img card-img-top" alt="Dish 3">
-          <div class="card-body">
-            <h5 class="card-title">Vegetarian Quiche</h5>
-            <p class="card-text">A savory pie with seasonal veggies. Prepared upon request.</p>
-            <span class="badge bg-primary">$10</span>
-          </div>
-        </div>
-      </div>
-      <!-- Dish 4 -->
-      <div class="col-12 col-md-6">
-        <div class="card h-100">
-          <img src="https://placehold.co/400x150" class="dish-img card-img-top" alt="Dish 4">
-          <div class="card-body">
-            <h5 class="card-title">Beef Stew</h5>
-            <p class="card-text">Hearty stew with slow-cooked beef and vegetables. Available Wednesdays (limited).</p>
-            <span class="badge bg-primary">$14</span>
-          </div>
-        </div>
-      </div>
-      <!-- Add more dishes as needed -->
+      <p class="mt-2">Loading today's menu...</p>
+    </div>
+  </div>
+
+  <!-- Available Today Section -->
+  <div id="available-today-section" class="container mb-5" style="display: none;">
+    <h3 class="mb-3">Available Today</h3>
+    <div id="available-today" class="row g-3">
+      <!-- Available today dishes will be populated here -->
+    </div>
+  </div>
+
+  <!-- Tomorrow's Special Section -->
+  <div id="tomorrow-section" class="container mb-5" style="display: none;">
+    <h3 class="mb-3">Tomorrow's Special</h3>
+    <div id="tomorrow-dish" class="row g-3">
+      <!-- Tomorrow's dish will be populated here -->
+    </div>
+  </div>
+
+  <!-- Made to Order Section -->
+  <div id="made-to-order-section" class="container mb-5" style="display: none;">
+    <h3 class="mb-3">Made to Order</h3>
+    <div id="made-to-order" class="row g-3">
+      <!-- Made to order dishes will be populated here -->
     </div>
   </div>
 
@@ -129,6 +113,13 @@
     </div>
   </div>
 
+  <!-- Error Message -->
+  <div id="error-message" class="container mb-5" style="display: none;">
+    <div class="alert alert-danger text-center">
+      <strong>Sorry!</strong> Unable to load the menu right now. Please try refreshing the page or contact me directly.
+    </div>
+  </div>
+
   <!-- Floating SMS Button -->
   <a href="sms:+1234567890?body=Hi%20I%20am%20interested%20in%20your%20homemade%20dishes!" class="sms-btn" aria-label="Send SMS">
     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-chat-dots" viewBox="0 0 16 16">
@@ -138,9 +129,132 @@
   </a>
 
   <footer class="text-center py-3 bg-light mt-5">
-    <small>&copy; 2025 [Your Name]. All rights reserved.</small>
+    <small>&copy; 2025 Matt. All rights reserved.</small>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Replace with your Google Sheets ID
+    const SHEET_ID = '2PACX-1vQIaaoNaohCf4j-Bu1It2kQQKcMuSHAWKT6ErB09NDnpoyxeF-SyKXbVYfsqdFgSkR3YUhRPQtl7AM-';
+    const SHEET_NAME = 'menu';
+    
+    // Google Sheets CSV URL
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQIaaoNaohCf4j-Bu1It2kQQKcMuSHAWKT6ErB09NDnpoyxeF-SyKXbVYfsqdFgSkR3YUhRPQtl7AM-/pub?output=csv';
+
+    // Get today and tomorrow day indices (0 = Sunday, 1 = Monday, etc.)
+    const today = new Date();
+    const todayIdx = today.getDay();
+    const tomorrowIdx = (todayIdx + 1) % 7;
+
+    // Function to parse CSV data
+    function parseCSV(text) {
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const data = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+          const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
+          const row = {};
+          headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+          });
+          data.push(row);
+        }
+      }
+      return data;
+    }
+
+    // Function to create dish card HTML
+    function createDishCard(dish, badgeType = '') {
+      let badges = '';
+      
+      // Add availability badges
+      if (badgeType === 'available') {
+        badges += `<span class="badge bg-success mb-2">Available Today</span>`;
+        if (dish.quantity && parseInt(dish.quantity) > 0) {
+          const unit = dish.quantity == 1 ? 'tray' : 'trays';
+          badges += `<span class="badge bg-warning mb-2 ms-1">${dish.quantity} ${unit} left</span>`;
+        }
+      } else if (badgeType === 'tomorrow') {
+        badges += `<span class="badge bg-info mb-2">Tomorrow's Special</span>`;
+      } else if (badgeType === 'made-to-order') {
+        badges += `<span class="badge bg-secondary mb-2">Made to Order</span>`;
+      }
+
+      return `
+        <div class="col-12 col-md-6">
+          <div class="card h-100">
+            <img src="${dish.image || 'https://placehold.co/400x250'}" class="dish-img card-img-top" alt="${dish.name}">
+            <div class="card-body">
+              ${badges}
+              <h5 class="card-title">${dish.name}</h5>
+              <p class="card-text">${dish.description}</p>
+              <span class="badge bg-primary">$${dish.price}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Function to load and display menu
+    async function loadMenu() {
+      try {
+        const response = await fetch(SHEET_URL);
+        const csvText = await response.text();
+        const menuData = parseCSV(csvText);
+
+        // Filter dishes based on availability and type
+        const availableToday = menuData.filter(dish => 
+          dish.quantity && parseInt(dish.quantity) > 0
+        );
+        
+        const tomorrowDish = menuData.find(dish => 
+          dish.day && parseInt(dish.day) === tomorrowIdx && dish.type === 'daily'
+        );
+        
+        const madeToOrderDishes = menuData.filter(dish => 
+          dish.type === 'request'
+        );
+
+        // Hide loading
+        document.getElementById('loading').style.display = 'none';
+
+        // Populate Available Today section
+        if (availableToday.length > 0) {
+          const availableTodayHTML = availableToday.map(dish => 
+            createDishCard(dish, 'available')
+          ).join('');
+          document.getElementById('available-today').innerHTML = availableTodayHTML;
+          document.getElementById('available-today-section').style.display = 'block';
+        }
+
+        // Populate Tomorrow's Special section
+        if (tomorrowDish) {
+          const tomorrowHTML = createDishCard(tomorrowDish, 'tomorrow');
+          document.getElementById('tomorrow-dish').innerHTML = tomorrowHTML;
+          document.getElementById('tomorrow-section').style.display = 'block';
+        }
+
+        // Populate Made to Order section
+        if (madeToOrderDishes.length > 0) {
+          const madeToOrderHTML = madeToOrderDishes.map(dish => 
+            createDishCard(dish, 'made-to-order')
+          ).join('');
+          document.getElementById('made-to-order').innerHTML = madeToOrderHTML;
+          document.getElementById('made-to-order-section').style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Error loading menu:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-message').style.display = 'block';
+      }
+    }
+
+    // Load menu when page loads
+    document.addEventListener('DOMContentLoaded', loadMenu);
+  </script>
 </body>
 </html>
