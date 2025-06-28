@@ -232,7 +232,7 @@
 
         // Populate Tomorrow's Special section
         if (tomorrowDish.length > 0) {
-  const tomorrowHTML = tomorrowDishes.map(dish => 
+  const tomorrowHTML = tomorrowDish.map(dish => 
     createDishCard(dish, 'tomorrow')
   ).join('');
   document.getElementById('tomorrow-dish').innerHTML = tomorrowHTML;
