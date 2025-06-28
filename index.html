@@ -210,7 +210,7 @@
   dish.quantity && parseInt(dish.quantity) > 0
 );
         
-        const tomorrowDish = menuData.find(dish => 
+        const tomorrowDish = menuData.filter(dish => 
           dish.day && parseInt(dish.day) === tomorrowIdx && dish.type === 'daily'
         );
         
@@ -231,11 +231,13 @@
         }
 
         // Populate Tomorrow's Special section
-        if (tomorrowDish) {
-          const tomorrowHTML = createDishCard(tomorrowDish, 'tomorrow');
-          document.getElementById('tomorrow-dish').innerHTML = tomorrowHTML;
-          document.getElementById('tomorrow-section').style.display = 'block';
-        }
+        if (tomorrowDish.length > 0) {
+  const tomorrowHTML = tomorrowDishes.map(dish => 
+    createDishCard(dish, 'tomorrow')
+  ).join('');
+  document.getElementById('tomorrow-dish').innerHTML = tomorrowHTML;
+  document.getElementById('tomorrow-section').style.display = 'block';
+}
 
         // Populate Made to Order section
         if (madeToOrderDishes.length > 0) {
