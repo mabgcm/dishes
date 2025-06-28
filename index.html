@@ -207,16 +207,16 @@
 
         // Filter dishes based on availability and type
         const availableToday = menuData.filter(dish => 
-          dish.quantity && parseInt(dish.quantity) > 0
-        );
+  dish.quantity && parseInt(dish.quantity) > 0
+);
         
         const tomorrowDish = menuData.find(dish => 
           dish.day && parseInt(dish.day) === tomorrowIdx && dish.type === 'daily'
         );
         
         const madeToOrderDishes = menuData.filter(dish => 
-          dish.type === 'request'
-        );
+  dish.type === 'request' && (!dish.quantity || parseInt(dish.quantity) === 0)
+);
 
         // Hide loading
         document.getElementById('loading').style.display = 'none';
